@@ -65,7 +65,7 @@ fn main() {
         p.push(Path::new(&conf.name));
         let mut c = Command::new(p.as_os_str());
         println!("{}", "running".color(Color::BrightCyan));
-        c.spawn().unwrap_or_else(|x| {error(&format!("command failed: {}", x))}).wait().expect_np("couldn't wait for command");
+        c.spawn().expect_np("command failed").wait().expect_np("couldn't wait for command");
     } else if args[0]=="clean" || args[0]=="c" {
         let name = parse_config().name;
         if fs::read_dir(".\\build").is_ok() {
@@ -79,8 +79,8 @@ fn main() {
 }
 
 fn run_cmd(mut c: Command) {
-    if !c.spawn().unwrap_or_else(|x| {error(&format!("command failed: {}", x))}).wait().expect_np("couldn't wait for command").success() {
-        error("command failed");
+    if !c.spawn().expect_np("command failed").wait().expect_np("couldn't wait for command").success() {
+        error("command failed: exit code nonzero");
     }
 }
 fn build(c: &Config) {
@@ -92,31 +92,26 @@ fn build(c: &Config) {
 
     println!("{}", "building".color(Color::Yellow));
     let mut objs = String::new();
-    for file in fs::read_dir(".\\src").expect_np("missing src directory") {
-        if let Ok(file) = file {
-            let fname = file.file_name().into_string().map_err(|x| x.to_string_lossy().into_owned()).expect_np("non unicode filename");
-            let (n, t) = fname.rsplit_once('.').or(Some((&fname, ""))).unwrap();
-            let t = format!(".{}", t);
-            objs.extend(format!("build\\\\{n}{t}.o ").chars());
+    for file in fs::read_dir(".\\src").expect_np("missing src directory").map(|x| x.expect_np("file error")) {
+        let fname = file.file_name().into_string().map_err(|x| x.to_string_lossy().into_owned()).expect_np("non unicode filename");
+        let (n, t) = fname.rsplit_once('.').or(Some((&fname, ""))).unwrap();
+        let t = format!(".{}", t);
+        objs.extend(format!("build\\\\{n}{t}.o ").chars());
 
-            if let (Ok(f), Ok(s)) = (File::open(&format!("build\\{n}{t}.o")), File::open(&format!("src\\{n}{t}"))) {
-                if let (Ok(obj), Ok(src)) = (f.metadata().expect_np("couldn't get file metadata").modified(), s.metadata().expect_np("couldn't get file metadata").modified()) {
-                    if src<obj {
-                        continue;
-                    }
+        if let (Ok(f), Ok(s)) = (File::open(&format!("build\\{n}{t}.o")), File::open(&format!("src\\{n}{t}"))) {
+            if let (Ok(obj), Ok(src)) = (f.metadata().expect_np("couldn't get file metadata").modified(), s.metadata().expect_np("couldn't get file metadata").modified()) {
+                if src<obj {
+                    continue;
                 }
             }
+        }
 
-            if let Some(b) = build.get(&t) {
-                let c = b.replace("$build", &format!("build\\\\{n}{t}"));
-                let c = c.replace("$src", &format!("src\\\\{n}{t}"));
-                println!("{} {}", "running".color(Color::BrightCyan), c.color(Color::BrightBlue));
-                let c = execute::command(c);
-                run_cmd(c);
-            }
-
-        } else {
-            error("file error");
+        if let Some(b) = build.get(&t) {
+            let c = b.replace("$build", &format!("build\\\\{n}{t}"));
+            let c = c.replace("$src", &format!("src\\\\{n}{t}"));
+            println!("{} {}", "running".color(Color::BrightCyan), c.color(Color::BrightBlue));
+            let c = execute::command(c);
+            run_cmd(c);
         }
     }
 
