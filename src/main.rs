@@ -36,9 +36,17 @@ fn main() {
         if fs::read_dir(format!(".\\{}", args[1])).is_ok_and(|x| x.peekable().peek().is_some()) {
             error("project already exists");
         }
+        let mut cpp = false;
         fs::create_dir_all(format!(".\\{}\\src", args[1])).expect_np("couldn't create directory tree");
-        File::create(format!(".\\{}\\src\\main.asm", args[1])).expect_np("couldn't make main.asm").write_all(include_bytes!("main.asm")).expect_np("couldn't write to main.asm");
-        File::create(format!(".\\{}\\nasm_proj.json", args[1])).expect_np("couldn't make project config").write_all(include_str!("nasm_proj.json").replace("$name", &args[1]).as_bytes()).expect_np("couldn't write to project config");
+        if args.len()<3 || args[2].to_ascii_lowercase()=="asm" {
+            File::create(format!(".\\{}\\src\\main.asm", args[1])).expect_np("couldn't make main.asm").write_all(include_bytes!("default\\main.asm")).expect_np("couldn't write to main.asm");
+        } else if args[2].to_ascii_lowercase()=="c" {
+            File::create(format!(".\\{}\\src\\main.c", args[1])).expect_np("couldn't make main.c").write_all(include_bytes!("default\\main.c")).expect_np("couldn't write to main.c");
+        } else if args[2].to_ascii_lowercase()=="c++" || args[2].to_ascii_lowercase()=="cpp" {
+            File::create(format!(".\\{}\\src\\main.cpp", args[1])).expect_np("couldn't make main.cpp").write_all(include_bytes!("default\\main.cpp")).expect_np("couldn't write to main.cpp");
+            cpp = true;
+        }
+        File::create(format!(".\\{}\\nasm_proj.json", args[1])).expect_np("couldn't make project config").write_all(include_str!("nasm_proj.json").replace("$name", &args[1]).replace("$++", if cpp {"++"} else {""}).as_bytes()).expect_np("couldn't write to project config");
     } else if args[0]=="build" || args[0]=="b" {
         build(&parse_config());
     } else if args[0]=="run" || args[0]=="r" {
