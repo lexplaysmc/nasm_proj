@@ -5,5 +5,6 @@
         ".c": "clang $src -c -o $build.o",
         ".cpp": "clang++ $src -c -o $build.o"
     },
-    "link": "clang$++ $obj -o $proj.exe"
+    "link": "clang$++ $obj -o $proj.exe",
+    "lib": []
 }

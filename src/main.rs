@@ -3,11 +3,13 @@
 
 pub mod errors;
 pub mod config;
+pub mod build;
+
+use config::parse_config;
+use errors::{Expect, error};
+use build::build;
 
 use colored::Color;
-use config::{Config, parse_config};
-use errors::{Expect, error};
-
 use colored::Colorize;
 
 use std::env;
@@ -75,6 +77,15 @@ fn main() {
             fs::remove_file(format!(".\\{name}.exe")).expect_np("couldn't delete exe");
         }
         println!("{}", "done cleaning".color(Color::Yellow));
+    } else if args[0]=="cleanlib" || args[0]=="cl" {
+        let mut p = env::current_exe().expect_np("couldn't get exe");
+        p.pop();
+        p.pop();
+        env::set_current_dir(p).expect_np("couldn't cd");
+        if fs::read_dir(".\\build").is_ok() {
+            fs::remove_dir_all(".\\build").expect_np("couldn't delete build");
+        }
+        println!("{}", "done cleaning".color(Color::Yellow));
     }
 }
 
@@ -82,46 +93,4 @@ fn run_cmd(mut c: Command) {
     if !c.spawn().expect_np("command failed").wait().expect_np("couldn't wait for command").success() {
         error("command failed: exit code nonzero");
     }
-}
-fn build(c: &Config) {
-    fs::create_dir_all(".\\build").expect_np("couldn't make build directory");
-
-    let name = &c.name;
-    let build = &c.build;
-    let link = &c.link;
-
-    println!("{}", "building".color(Color::Yellow));
-    let mut objs = String::new();
-    for file in fs::read_dir(".\\src").expect_np("missing src directory").map(|x| x.expect_np("file error")) {
-        let fname = file.file_name().into_string().map_err(|x| x.to_string_lossy().into_owned()).expect_np("non unicode filename");
-        let (n, t) = fname.rsplit_once('.').or(Some((&fname, ""))).unwrap();
-        let t = format!(".{}", t);
-        objs.extend(format!("build\\\\{n}{t}.o ").chars());
-
-        if let (Ok(f), Ok(s)) = (File::open(&format!("build\\{n}{t}.o")), File::open(&format!("src\\{n}{t}"))) {
-            if let (Ok(obj), Ok(src)) = (f.metadata().expect_np("couldn't get file metadata").modified(), s.metadata().expect_np("couldn't get file metadata").modified()) {
-                if src<obj {
-                    continue;
-                }
-            }
-        }
-
-        if let Some(b) = build.get(&t) {
-            let c = b.replace("$build", &format!("build\\\\{n}{t}"));
-            let c = c.replace("$src", &format!("src\\\\{n}{t}"));
-            println!("{} {}", "running".color(Color::BrightCyan), c.color(Color::BrightBlue));
-            let c = execute::command(c);
-            run_cmd(c);
-        }
-    }
-
-    
-    println!("{}", "linking".color(Color::Yellow));
-    let objs = objs.trim_end();
-    let c = link.replace("$proj", &name);
-    let c = c.replace("$obj", objs);
-    println!("{} {}", "running".color(Color::BrightCyan), c.color(Color::BrightGreen));
-    let c = execute::command(c);
-    run_cmd(c);
-    println!("{}", "done building".color(Color::Yellow));
 }

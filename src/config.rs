@@ -7,11 +7,12 @@ use crate::errors::{error, Expect};
 pub struct Config {
     pub name: String,
     pub build: HashMap<String, String>,
-    pub link: String
+    pub link: String,
+    pub lib: Vec<String>
 }
 impl Config {
-    pub fn new(name: String, build: HashMap<String, String>, link: String) -> Self {
-        Self { name, build, link }
+    pub fn new(name: String, build: HashMap<String, String>, link: String, lib: Vec<String>) -> Self {
+        Self { name, build, link, lib }
     }
 }
 
@@ -21,11 +22,18 @@ pub fn parse_config() -> Config {
         let build;
         let link;
         let name;
+        let mut lib;
 
-        if let (Some(JsonValue::Object(b)), Some(l), Some(n)) = (s.get("build"), json_to_string(s.get("link").expect_np("JSON has wrong format")), json_to_string(s.get("name").expect_np("JSON has wrong format"))) {
+        if let (Some(JsonValue::Object(b)), Some(l), Some(n), Some(JsonValue::Array(li))) = (s.get("build"), json_to_string(s.get("link").expect_np("JSON has wrong format")), json_to_string(s.get("name").expect_np("JSON has wrong format")), s.get("lib")) {
             build = b;
             link = l;
             name = n;
+            lib = vec![];
+            for x in li {
+                if let Some(l) = json_to_string(x) {
+                    lib.push(l.into_owned());
+                }
+            }
         } else {
             error("JSON has wrong format");
         }
@@ -39,7 +47,7 @@ pub fn parse_config() -> Config {
             }
         }
 
-        return Config::new(name.to_string(), map, link.to_string())
+        return Config::new(name.to_string(), map, link.to_string(), lib)
     } else {
         error("JSON has wrong format");
     }
