@@ -21,7 +21,7 @@ fn main() {
     let args: Vec<_> = env::args().skip(1).collect();
     if args.len()==0 {
         println!("{}\n\
-                {1} new {2} - makes a new project in the directory {3}\n\
+                {1} new {2} <asm|c|cpp|c++> - makes a new project in the directory {3} (language is optional and defaults to asm)\n\
                 {1} build - builds the project in the cwd into an exe\n\
                 {1} run - builds and runs the project in the cwd\n\
                 {1} clean - cleans up the .\\build directory and the built exe",
