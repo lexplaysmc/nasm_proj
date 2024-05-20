@@ -24,8 +24,11 @@ fn main() {
                 {1} new {2} <asm|c|cpp|c++> - makes a new project in the directory {3} (language is optional and defaults to asm)\n\
                 {1} build - builds the project in the cwd into an exe\n\
                 {1} run - builds and runs the project in the cwd\n\
-                {1} clean - cleans up the .\\build directory and the built exe",
-            "Commands:".color(Color::Yellow), "nasm_proj".color(Color::BrightGreen), "<name>".color(Color::BrightBlue), ".\\<name>".color(Color::BrightBlue));
+                {1} clean - cleans up the .\\build directory and the built exe\n\n\
+                {4}\n\
+                {1} new:\n\
+                \t{5} - don't initialize this project with git",
+            "Commands:".color(Color::Yellow), "nasm_proj".color(Color::BrightGreen), "<name>".color(Color::BrightBlue), ".\\<name>".color(Color::BrightBlue), "Arguments:".color(Color::Yellow), "--nvcs".color(Color::BrightBlue));
         return;
     }
     if args[0]=="new" || args[0]=="n" {
@@ -47,6 +50,12 @@ fn main() {
             cpp = true;
         }
         File::create(format!(".\\{}\\nasm_proj.json", args[1])).expect_np("couldn't make project config").write_all(include_str!("nasm_proj.json").replace("$name", &args[1]).replace("$++", if cpp {"++"} else {""}).as_bytes()).expect_np("couldn't write to project config");
+        if !args.contains(&"--nvcs".to_string()) {
+            env::set_current_dir(format!(".\\{}", args[1])).expect_np("couldn't change cwd");
+            File::create(".\\.gitignore").expect_np("couldn't make gitignore").write_all(include_bytes!("default\\gitignore")).expect_np("couldn't write to gitignore");
+            run_cmd(execute::command!("git init"));
+            run_cmd(execute::command!("git add ."))
+        }
     } else if args[0]=="build" || args[0]=="b" {
         build(&parse_config());
     } else if args[0]=="run" || args[0]=="r" {
