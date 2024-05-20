@@ -5,19 +5,19 @@ use colored::Colorize;
 pub trait Expect<T, R, I> {
     fn expect_np(self: Self, msg: &str) -> I;
 }
-impl<T, E> Expect<Result<T, E>, E, T> for Result<T, E> {
-    default fn expect_np(self: Self, msg: &str) -> T
-    {
-        match self {
-            Ok(t) => {
-                return t;
-            }
-            Err(_) => {
-                error(msg)
-            }
-        }
-    }
-}
+// impl<T, E> Expect<Result<T, E>, E, T> for Result<T, E> {
+//     default fn expect_np(self: Self, msg: &str) -> T
+//     {
+//         match self {
+//             Ok(t) => {
+//                 return t;
+//             }
+//             Err(_) => {
+//                 error(msg)
+//             }
+//         }
+//     }
+// }
 impl<T, E: Display> Expect<Result<T, E>, E, T> for Result<T, E> {
     fn expect_np(self: Self, msg: &str) -> T
     {
