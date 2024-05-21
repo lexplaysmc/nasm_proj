@@ -19,7 +19,7 @@ pub trait Expect<T, R, I> {
 //     }
 // }
 impl<T, E: Display> Expect<Result<T, E>, E, T> for Result<T, E> {
-    fn expect_np(self: Self, msg: &str) -> T
+    fn expect_np(self, msg: &str) -> T
     {
         match self {
             Ok(t) => {
@@ -32,7 +32,7 @@ impl<T, E: Display> Expect<Result<T, E>, E, T> for Result<T, E> {
     }
 }
 impl<T> Expect<Option<T>, (), T> for Option<T> {
-    fn expect_np(self: Self, msg: &str) -> T
+    fn expect_np(self, msg: &str) -> T
     {
         match self {
             Some(t) => {

@@ -22,17 +22,17 @@ pub fn build(c: &Config) {
         let fname = file.file_name().into_string().map_err(|x| x.to_string_lossy().into_owned()).expect_np("non unicode filename");
         let (n, t) = fname.rsplit_once('.').or(Some((&fname, ""))).unwrap();
         let t = format!(".{}", t);
-        objs.extend(format!("build\\\\{n}{t}.o ").chars());
-
-        if let (Ok(f), Ok(s)) = (File::open(&format!("build\\{n}{t}.o")), File::open(&format!("src\\{n}{t}"))) {
-            if let (Ok(obj), Ok(src)) = (f.metadata().expect_np("couldn't get file metadata").modified(), s.metadata().expect_np("couldn't get file metadata").modified()) {
-                if src<obj {
-                    continue;
+        
+        
+        if let Some(b) = build.get(&t) {
+            objs.extend(format!("build\\\\{n}{t}.o ").chars());
+            if let (Ok(f), Ok(s)) = (File::open(&format!("build\\{n}{t}.o")), File::open(&format!("src\\{n}{t}"))) {
+                if let (Ok(obj), Ok(src)) = (f.metadata().expect_np("couldn't get file metadata").modified(), s.metadata().expect_np("couldn't get file metadata").modified()) {
+                    if src<obj {
+                        continue;
+                    }
                 }
             }
-        }
-
-        if let Some(b) = build.get(&t) {
             let c = b.replace("$build", &format!("build\\{n}{t}"));
             let c = c.replace("$src", &format!("src\\{n}{t}"));
             let c = c.replace("$lib", &lib_loc.as_mut_os_string().clone().into_string().map_err(|_| "".to_string()).expect_np("non unicode path"));
