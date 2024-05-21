@@ -22,3 +22,10 @@ to
 ```
     "link": "clang++ $obj -o $proj.exe"
 ```
+If the issue is in \lib linking make sure that you include .hpp and compile files and make sure that you add the source file in your nasm_proj json like this:
+```
+    "lib": []
+```
+```
+    "lib": ["<filename>"]
+```

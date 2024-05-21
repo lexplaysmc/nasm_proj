@@ -2,8 +2,8 @@
     "name": "$name",
     "build": {
         ".asm": "nasm $src -fwin64 -o $build.o",
-        ".c": "clang $src -c -o $build.o",
-        ".cpp": "clang++ $src -c -o $build.o"
+        ".c": "clang $src -c -iquote $lib -o $build.o",
+        ".cpp": "clang++ $src -c -iquote $lib -o $build.o"
     },
     "link": "clang$++ $obj -o $proj.exe",
     "lib": []

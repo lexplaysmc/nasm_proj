@@ -7,6 +7,11 @@ use crate::{config::{self, Config}, errors::Expect, run_cmd};
 pub fn build(c: &Config) {
     fs::create_dir_all(".\\build").expect_np("couldn't make build directory");
 
+    let mut lib_loc = env::current_exe().expect_np("couldn't find current exe");
+    lib_loc.pop();
+    lib_loc.pop();
+    lib_loc.push("lib");
+
     let name = &c.name;
     let build = &c.build;
     let link = &c.link;
@@ -28,8 +33,10 @@ pub fn build(c: &Config) {
         }
 
         if let Some(b) = build.get(&t) {
-            let c = b.replace("$build", &format!("build\\\\{n}{t}"));
-            let c = c.replace("$src", &format!("src\\\\{n}{t}"));
+            let c = b.replace("$build", &format!("build\\{n}{t}"));
+            let c = c.replace("$src", &format!("src\\{n}{t}"));
+            let c = c.replace("$lib", &lib_loc.as_mut_os_string().clone().into_string().map_err(|_| "".to_string()).expect_np("non unicode path"));
+            let c = c.replace('\\', "\\\\");
             println!("{} {}", "running".color(Color::BrightCyan), c.color(Color::BrightBlue));
             let c = execute::command(c);
             run_cmd(c);
@@ -93,6 +100,6 @@ fn build_lib(c: &Config) -> String {
         nasm_dir.pop();
     }
     env::set_current_dir(cwd).expect_np("couldn't cd");
-    println!("{}: {}", "done building libs".color(Color::Yellow), objs);
+    println!("{}", "done building libs".color(Color::Yellow));
     objs
 }

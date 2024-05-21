@@ -26,7 +26,8 @@ fn main() {
                 {1} new {2} <asm|c|cpp|c++> - makes a new project in the directory {3} (language is optional and defaults to asm)\n\
                 {1} build - builds the project in the cwd into an exe\n\
                 {1} run - builds and runs the project in the cwd\n\
-                {1} clean - cleans up the .\\build directory and the built exe\n\n\
+                {1} clean - cleans up the .\\build directory and the built exe\n\
+                {1} cleanlib - cleans up the compiled libraries. use this if you changed a lib file\n\n\
                 {4}\n\
                 {1} new:\n\
                 \t{5} - don't initialize this project with git",
